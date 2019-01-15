@@ -19,6 +19,7 @@ class ListScene: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        //replace arun by userid from api
         self.presenter.senderUserId = "arun"
         self.getChatList()
         self.navigationController?.isNavigationBarHidden = true
@@ -32,13 +33,11 @@ class ListScene: UIViewController {
             switch response.result {
             case .success:
                 print(response)
-               print("response.result.value",response.result.value)
                 if let data = response.result.value as? [NSDictionary]{
                 print("respresponseJsononse",data)
                 self.presenter.listArry = data
                 self.tableView.reloadData()
             }
-//                self.presenter.listArry.append(response as [String:String])
             case .failure(let error): print(error)
             }
         }

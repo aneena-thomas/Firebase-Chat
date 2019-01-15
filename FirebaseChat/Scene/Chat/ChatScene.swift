@@ -18,6 +18,17 @@ extension Date {
     }
 }
 
+extension Date {
+    var millisecondsSince1970:Int {
+        return Int((self.timeIntervalSince1970 * 1000.0).rounded())
+    }
+    
+    init(milliseconds:Int) {
+        self = Date(timeIntervalSince1970: TimeInterval(milliseconds) / 1000)
+    }
+}
+
+
 class ChatScene: UIViewController {
     
     @IBOutlet weak var sendButton: UIButton!
@@ -48,6 +59,7 @@ class ChatScene: UIViewController {
         self.placeholderCreation()
         self.textViewSettings()
         self.titleText.text = self.presenter.chatDisplayName
+        //get chat messages
         self.getChatInfo()
         self.tableViewSettings()
     }
@@ -74,22 +86,12 @@ class ChatScene: UIViewController {
         Alamofire.request(url).responseJSON { response in
             switch response.result {
             case .success:
-                print("response.result",response.result)
                 print("response.data",response.data)
-
-                print("response.result.value",response.result.value)
                 if let data = response.result.value as? NSDictionary{
-                    print("respresponseJsononse",data)
-                    self.presenter.chatArray = data
+                    self.presenter.chatList = data
                     self.presenter.messageArray = data["messages"] as! [NSDictionary]
                     self.ChattableView.reloadData()
-                    print("count",self.presenter.chatArray.count)
-                    print("self.presenter.messageArray",self.presenter.messageArray.count)
-                    print("array",self.presenter.chatArray)
-                    print("messageArray",self.presenter.messageArray)
-
                 }
-            //                self.presenter.listArry.append(response as [String:String])
             case .failure(let error): print(error)
             }
         }
@@ -127,12 +129,15 @@ class ChatScene: UIViewController {
     }
     
     @IBAction func sendAction(_ sender: Any) {
+        let createdTimestamp = Date().millisecondsSince1970
+
+
         let url = "https://us-central1-engagedxb-qa.cloudfunctions.net/postChat"
         let parameters: [String: String] = [
             "chatId" : self.presenter.chatId,
             "senderId" : self.presenter.senderUserId,
             "messageBody" : self.messageTextView.text,
-            "messageTime" : "1547534504"
+            "messageTime" : String(describing: createdTimestamp)
         ]
         print("parameters",parameters)
         Alamofire.request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default)
@@ -222,19 +227,29 @@ extension ChatScene : UITableViewDelegate, UITableViewDataSource {
             print("messgeDetailsArray",messgeDetailsArray)
             cell.senderMessageTextView.text = messgeDetailsArray["messageBody"] as? String
             cell.sendView.layer.cornerRadius = 10
-    //        if let time = messgeDetailsArray["messageTime"] as? String{
-    //            let milisecond = Double(Double)
-    //            let dateTimeStamp = NSDate(timeIntervalSince1970:milisecond/1000)
-    //            let strDateSelect = self.dateToString(dateTime: dateTimeStamp)
-    //            cell.lastTimeLabel.text = strDateSelect
-    //        }
+            //remove the checking of this mine line after deleting all messages
+            if  messgeDetailsArray["messageBody"] as? String == "Mine"{
+                if let time = messgeDetailsArray["messageTime"] as? String{
+                    let milisecond = Double(time)
+                    let dateTimeStamp = NSDate(timeIntervalSince1970:milisecond!/1000)
+                    let strDateSelect = self.dateToString(dateTime: dateTimeStamp)
+                    cell.lastTimeLabel.text = strDateSelect
+                }
+            }
             return cell
         }
         else{
             let cell = tableView.dequeueReusableCell(withIdentifier: "ChatReceiverTableViewCell", for: indexPath) as! ChatReceiverTableViewCell
-            //        let dataArray = self.presenter.chatArray
             print("messgeDetailsArray",messgeDetailsArray)
             cell.receiverMessageTextView.text = messgeDetailsArray["messageBody"] as? String
+            //uncomment the below line after deleting all messages
+
+//            if let time = messgeDetailsArray["messageTime"] as? String{
+//                let milisecond = Double(time)
+//                let dateTimeStamp = NSDate(timeIntervalSince1970:milisecond!/1000)
+//                let strDateSelect = self.dateToString(dateTime: dateTimeStamp)
+//                cell.lastTimeLabel.text = strDateSelect
+//            }
             cell.receiverView.layer.cornerRadius = 10
 
             return cell

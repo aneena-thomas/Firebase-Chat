@@ -9,7 +9,7 @@
 import UIKit
 
 class ChatPresenter: NSObject {
-    var chatArray = NSDictionary()
+    var chatList = NSDictionary()
     var messageArray = [NSDictionary]()
     var chatId = String()
     var chatDisplayName = String()
