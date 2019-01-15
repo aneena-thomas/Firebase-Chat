@@ -62,6 +62,7 @@ class ChatScene: UIViewController {
         //get chat messages
         self.getChatInfo()
         self.tableViewSettings()
+        self.keyboardSettings()
     }
     
     @IBAction func backAction(_ sender: Any) {
@@ -107,6 +108,18 @@ class ChatScene: UIViewController {
         placeholderLabel.isHidden = !textView.text.isEmpty
     }
 
+    func keyboardSettings(){
+        NotificationCenter.default.addObserver(self,
+            selector: #selector(self.keyboardNotification(notification:)),
+            name: UIResponder.keyboardWillChangeFrameNotification, object: nil) //You can use any subclass of UIResponder too
+
+//        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardNotification(notification:)), name: NSNotification.Name.UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        //        self.view.addGestureRecognizer(UITapGestureRecognizer(target: self.view, action: #selector(UIView.endEditing(_:))))
+        let swipeDown = UISwipeGestureRecognizer(target: self.view , action : #selector(UIView.endEditing(_:)))
+        swipeDown.direction = .down
+        self.view.addGestureRecognizer(swipeDown)
+    }
+    
     func textViewSettings (){
         self.messageTextView.layer.borderWidth = CGFloat(0.5)
         self.messageTextView.layer.borderColor = UIColor.darkGray.cgColor
@@ -175,6 +188,31 @@ class ChatScene: UIViewController {
                 print("Current data: \(data)")
                 self.getChatInfo()
 //                self.ChattableView.reloadData()
+        }
+    }
+    
+    @objc func keyboardNotification(notification: NSNotification) {
+        if let userInfo = notification.userInfo {
+            if let endFrame = (userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue{
+                if let duration:TimeInterval = (userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue{
+                    
+                    let animationCurveRawNSN = userInfo[UIResponder.keyboardAnimationCurveUserInfoKey] as? NSNumber
+                    let animationCurveRaw = animationCurveRawNSN?.uintValue ?? UIView.AnimationOptions.curveEaseInOut.rawValue
+                    let animationCurve:UIView.AnimationOptions = UIView.AnimationOptions(rawValue: animationCurveRaw)
+                    
+                    if (endFrame.origin.y) >= UIScreen.main.bounds.size.height {
+                        self.bottomViewContraits?.constant = 0.0
+                    } else {
+                        self.bottomViewContraits?.constant = endFrame.size.height
+                    }
+                    
+                    UIView.animate(withDuration: duration,
+                                   delay: TimeInterval(0),
+                                   options: animationCurve,
+                                   animations: { self.view.layoutIfNeeded() },
+                                   completion: nil)
+                }
+            }
         }
     }
     
